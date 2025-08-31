@@ -1,40 +1,82 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { listenPosts } from '@/lib/posts';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { MediaItem, PostDoc } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
+import AuthorBadge from '@/components/AuthorBadge';
 import WriteButton from '@/components/WriteButton';
 
 export default function GalleryPage() {
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<PostDoc[]>([]);
 
     useEffect(() => {
-        const unsub = listenPosts(setPosts);
+        const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+        const unsub = onSnapshot(q, (snap) => {
+            const data: PostDoc[] = snap.docs.map((doc) => {
+                const raw = doc.data() as any;
+                const createdAt = raw.createdAt?.toDate ? (raw.createdAt.toDate() as Date) : null;
+                return {
+                    id: doc.id,
+                    title: raw.title as string,
+                    content: raw.content as string,
+                    author: raw.author as string,
+                    authorRole: raw.authorRole as '운영자' | '집사',
+                    media: (raw.media || []) as MediaItem[],
+                    thumbnailUrl: (raw.thumbnailUrl ?? null) as string | null,
+                    likeCount: 0,
+                    createdAt,
+                    uid: (raw.uid ?? null) as string | null,
+                };
+            });
+            setPosts(data);
+        });
         return () => unsub();
     }, []);
 
     return (
-        <main className="max-w-6xl mx-auto p-4">
-            <section className="max-w-5xl mx-auto">
-                <h1 className="text-2xl font-bold mb-4">썸네일 뷰 🖼️</h1>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {posts.map((post) => (
-                        <Link key={post.id} href={`/post/${post.id}`} className="block">
-                            <div className="relative w-full aspect-square bg-white dark:bg-[color:var(--color-card-dark)] rounded-lg shadow hover:shadow-lg hover:scale-105 transition overflow-hidden">
-                                {post.imageUrl ? (
-                                    <Image src={post.imageUrl} alt={post.title} fill className="object-cover" />
+        <section>
+            <h1 className="text-xl font-bold mb-4">갤러리</h1>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {posts.map((post) => {
+                    const thumb = post.thumbnailUrl || post.media?.[0]?.url || null;
+                    const isVideo =
+                        !!thumb && post.media.find((m: MediaItem) => m.url === thumb)?.type === 'video';
+                    return (
+                        <Link
+                            key={post.id}
+                            href={`/post/${post.id}`}
+                            className="card shadow hover:shadow-lg transition overflow-hidden"
+                        >
+                            {thumb ? (
+                                isVideo ? (
+                                    <video src={thumb} className="w-full aspect-[4/3] object-cover" muted playsInline />
                                 ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400">
-                                        No Image
-                                    </div>
-                                )}
+                                    <Image
+                                        src={thumb}
+                                        alt={post.title || '썸네일'}
+                                        width={800}
+                                        height={600}
+                                        className="w-full aspect-[4/3] object-cover"
+                                    />
+                                )
+                            ) : (
+                                <div className="w-full aspect-[4/3] bg-gray-100 dark:bg-black/20" />
+                            )}
+                            <div className="p-2">
+                                <div className="text-sm font-medium line-clamp-1">{post.title}</div>
+                                <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                    <span>{post.author}</span>
+                                    <AuthorBadge role={post.authorRole} />
+                                </div>
                             </div>
                         </Link>
-                    ))}
-                </div>
-                <WriteButton/>
-            </section>
-        </main>
+                    );
+                })}
+            </div>
+            <WriteButton />
+        </section>
     );
 }

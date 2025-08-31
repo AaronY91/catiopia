@@ -1,37 +1,48 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import AuthorBadge from '@/components/AuthorBadge';
+import { MediaItem, PostDoc } from '@/lib/types';
+import PostCard from '@/components/PostCard';
 import WriteButton from '@/components/WriteButton';
 
 export default function BoardPage() {
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<PostDoc[]>([]);
 
     useEffect(() => {
-        const fetchPosts = async () => {
-            const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-            const snap = await getDocs(q);
-            setPosts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
-        fetchPosts();
+        const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+        const unsub = onSnapshot(q, (snap) => {
+            const data: PostDoc[] = snap.docs.map((doc) => {
+                const raw = doc.data() as any;
+                const createdAt = raw.createdAt?.toDate ? (raw.createdAt.toDate() as Date) : null;
+                return {
+                    id: doc.id,
+                    title: raw.title as string,
+                    content: raw.content as string,
+                    author: raw.author as string, // '집사' 또는 '운영자'
+                    authorRole: raw.authorRole as '운영자' | '집사',
+                    media: (raw.media || []) as MediaItem[],
+                    thumbnailUrl: (raw.thumbnailUrl ?? null) as string | null,
+                    likeCount: 0,
+                    createdAt,
+                    uid: (raw.uid ?? null) as string | null,
+                };
+            });
+            setPosts(data);
+        });
+        return () => unsub();
     }, []);
 
     return (
-        <main className="max-w-4xl mx-auto p-4">
-            {posts.map((post) => (
-                <Link key={post.id} href={`/post/${post.id}`} className="block p-4 bg-white dark:bg-[var(--color-card-dark)] rounded-lg shadow hover:shadow-lg transition">
-                    <h2 className="font-bold text-lg">{post.title}</h2>
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <span>{post.author}</span>
-                        <AuthorBadge role={post.author === '운영자' ? '운영자' : '집사'} />
-                    </div>
-                    <p className="mt-2 text-siamBrown line-clamp-2">{post.content}</p>
-                </Link>
-            ))}
+        <section>
+            <h1 className="text-xl font-bold mb-4">최신 글</h1>
+            <div className="grid gap-4">
+                {posts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                ))}
+            </div>
             <WriteButton />
-        </main>
+        </section>
     );
 }

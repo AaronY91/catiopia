@@ -1,45 +1,40 @@
 @import "tailwindcss";
 
+/* Catiopia 샴고양이 팔레트 및 테마 */
 @theme {
-    /* Light mode */
     --color-cream: #fdf6ec;
+    --color-cream-dark: #2b2623;
+    --color-card-dark: #3a3430;
     --color-siamBrown: #6b4f3f;
-    --color-pastelBlue: #a7c5bd;
-    --color-pastelPink: #f4c2c2;
+    --color-siamBrown-dark: #e3d5c9;
 
-    /* Dark mode */
-    --color-cream-dark: #2b2623;       /* 본문 배경 */
-    --color-card-dark: #3a3430;        /* 카드/헤더 배경 */
-    --color-siamBrown-dark: #e3d5c9;   /* 텍스트 */
-    --color-pastelBlue-dark: #8fbab1;  /* 포인트 블루 */
-    --color-pastelPink-dark: #e3b6b6;  /* 포인트 핑크 */
-
-    --font-sans: "Pretendard", "Noto Sans KR", sans-serif;
+    --color-pastelBlue: #6da8ff;
+    --color-pastelBlue-dark: #85b8ff;
+    --color-pastelPink: #ff91a4;
+    --color-pastelPink-dark: #ffadba;
 }
 
-/* 기본 배경/글자색 */
+html, body { height: 100%; }
+
 body {
-    background-color: var(--color-cream);
+    background: var(--color-cream);
     color: var(--color-siamBrown);
-    font-family: var(--font-sans);
 }
 
-/* 다크모드 적용 */
-.dark body {
-    background-color: var(--color-cream-dark);
+html.dark body {
+    background: var(--color-cream-dark);
     color: var(--color-siamBrown-dark);
 }
 
+/* 카드 공통 (purge-safe) */
 .card {
-    background-color: #ffffff;
+    background: #ffffff;
     border-radius: 0.5rem;
 }
 html.dark .card {
-    background-color: var(--color-card-dark);
+    background: var(--color-card-dark);
 }
 
 /* 유틸 */
-.container-narrow {
-    max-width: 64rem; /* ~1024px */
-    margin: 0 auto;
-}
+.container-narrow { max-width: 64rem; margin: 0 auto; }
+.container-wide { max-width: 96rem; margin: 0 auto; }

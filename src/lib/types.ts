@@ -1,24 +1,41 @@
-export interface Post {
+// lib/types.ts
+
+export type ThemeMode = 'light' | 'dark';
+export type ViewMode = 'board' | 'gallery';
+
+export type UserSettings = {
+    theme: ThemeMode;
+    viewMode: ViewMode;
+};
+
+export type MediaType = 'image' | 'video';
+
+export interface MediaItem {
+    url: string;
+    type: MediaType;
+    path: string;
+}
+
+export type AuthorRole = '운영자' | '집사';
+
+export interface PostDoc {
     id: string;
     title: string;
     content: string;
-    imageUrl?: string;
-    author: string;
+    author: string; // 표시용 이름
+    authorRole: AuthorRole;
+    media: MediaItem[];
+    thumbnailUrl?: string | null;
+    likeCount: number;
     createdAt: Date | null;
-    likes: number;
-    commentsCount: number;
+    uid?: string | null;
 }
 
-export interface Comment {
+export interface CommentDoc {
     id: string;
-    postId: string;
-    author: string;
     text: string;
-    parentId: string | null;
+    author: string;
+    authorRole: AuthorRole;
+    parentId?: string | null;
     createdAt: Date | null;
-}
-
-export interface UserSettings {
-    theme: 'light' | 'dark';
-    viewMode: 'board' | 'gallery';
 }

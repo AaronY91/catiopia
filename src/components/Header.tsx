@@ -1,79 +1,49 @@
 'use client';
 
 import Link from 'next/link';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
-import { UserSettings } from '@/lib/types';
-import { useRouter } from 'next/navigation';
-import CatLogo from './CatLogo';
-import { logout } from '@/lib/auth';
+import { googleLogin, anonLogin, logout } from '@/lib/firebase';
+import { useSettings } from '@/components/SettingsProvider';
 
 export default function Header() {
-    const [user, setUser] = useState<any>(null);
-    const router = useRouter();
-
-    const applyTheme = (theme: 'light' | 'dark') => {
-        if (theme === 'dark') document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark');
-    };
-
-    useEffect(() => {
-        const unsub = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
-            let settings: UserSettings | null = null;
-
-            if (currentUser && !currentUser.isAnonymous) {
-                const snap = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'preferences'));
-                if (snap.exists()) settings = snap.data() as UserSettings;
-            } else {
-                const saved = localStorage.getItem('settings');
-                if (saved) settings = JSON.parse(saved) as UserSettings;
-            }
-
-            if (settings) {
-                applyTheme(settings.theme);
-                if ((router as any).pathname === '/') {
-                    router.push(settings.viewMode === 'gallery' ? '/gallery' : '/board');
-                }
-            } else {
-                applyTheme('light');
-            }
-        });
-
-        return () => unsub();
-    }, []);
+    const { user, settings, setTheme, setViewMode } = useSettings();
 
     return (
-        <header className="flex items-center justify-between p-4 bg-white text-siamBrown dark:bg-[var(--color-card-dark)] dark:text-siamBrown-dark shadow-md">
+        <header className="flex items-center justify-between p-4 bg-white text-[var(--color-siamBrown)] dark:bg-[var(--color-card-dark)] dark:text-[var(--color-siamBrown-dark)] shadow-md">
             <Link href="/" className="flex flex-col leading-tight">
-        <span className="flex items-center gap-2 font-bold text-lg">
-          <CatLogo size={28} />
-          Catiopia
-        </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-          캣티오피아 집사 종합 플랫폼
-        </span>
+                <span className="flex items-center gap-2 font-bold text-lg">🐾 Catiopia</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">캣티오피아 집사 종합 플랫폼</span>
             </Link>
 
-            <nav className="flex gap-4 items-center">
-                <Link href="/settings" className="hover:text-pastelBlue dark:hover:text-pastelBlue-dark font-medium">
-                    설정
-                </Link>
-                {user ? (
+            <nav className="flex gap-3 items-center">
+                <Link href="/board" className="hover:text-[var(--color-pastelBlue)]">게시판</Link>
+                <Link href="/gallery" className="hover:text-[var(--color-pastelBlue)]">갤러리</Link>
+                <Link href="/write" className="hover:text-[var(--color-pastelBlue)]">글쓰기</Link>
+                <Link href="/settings" className="hover:text-[var(--color-pastelBlue)]">설정</Link>
+
+                <select
+                    className="text-sm border px-2 py-1 rounded"
+                    value={settings.viewMode}
+                    onChange={(e) => setViewMode(e.target.value as any, true)}
+                    title="보기 모드"
+                >
+                    <option value="board">게시판</option>
+                    <option value="gallery">갤러리</option>
+                </select>
+
+                <button
+                    onClick={() => setTheme(settings.theme === 'dark' ? 'light' : 'dark')}
+                    className="text-sm border px-2 py-1 rounded hover:border-[var(--color-pastelBlue)]"
+                >
+                    테마 토글
+                </button>
+
+                {!user ? (
                     <>
-            <span className="text-sm font-medium">
-              {user.isAnonymous ? '익명' : '집사'}
-            </span>
-                        <button onClick={logout} className="text-red-500 hover:underline font-medium">
-                            로그아웃
-                        </button>
+                        <button onClick={googleLogin} className="text-sm border px-2 py-1 rounded hover:border-[var(--color-pastelBlue)]">구글 로그인</button>
+                        <button onClick={anonLogin} className="text-sm border px-2 py-1 rounded hover:border-[var(--color-pastelBlue)]">익명</button>
                     </>
                 ) : (
-                    <Link href="/auth" className="text-pastelBlue hover:underline dark:text-pastelBlue-dark font-medium">
-                        로그인
-                    </Link>
+                    <button onClick={logout} className="text-sm text-red-500 hover:underline">로그아웃</button>
                 )}
             </nav>
         </header>
