@@ -1,3 +1,4 @@
+// app/settings/page.tsx
 'use client';
 
 import { useSettings } from '@/components/SettingsProvider';
@@ -7,10 +8,10 @@ export default function SettingsPage() {
     const { settings, setTheme, setViewMode } = useSettings();
 
     const optionClass = (active: boolean) =>
-        `px-4 py-2 rounded border transition cursor-pointer ${
+        `px-4 py-2 rounded border font-medium transition cursor-pointer ${
             active
                 ? 'bg-[var(--color-pastelBlue)] text-white border-[var(--color-pastelBlue)]'
-                : 'bg-white dark:bg-[var(--color-card-dark)] border-gray-300 hover:border-[var(--color-pastelBlue)]'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-300 hover:border-[var(--color-pastelBlue)]'
         }`;
 
     return (
